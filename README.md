@@ -52,7 +52,7 @@ Each user's financial data will be isolated using user-specific ownership.
 
 ## 🎯 Goal
 
-Build a simple finance tracker that can be used by people in different countries, including Japan and Bangladesh, with support for different currencies.
+Build a modern, secure, and user-friendly personal finance platform that helps users track spending, manage budgets, and make better financial decisions.
 
 ## 👤 Author
 
