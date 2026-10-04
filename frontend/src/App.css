@@ -1,0 +1,311 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  background: #f5f7fb;
+  color: #18212f;
+}
+
+.sidebar {
+  min-height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e7eaf0;
+  padding: 28px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 28px;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.logoMark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #635bff;
+  color: white;
+}
+
+nav {
+  display: grid;
+  gap: 6px;
+}
+
+.navItem {
+  border: 0;
+  background: transparent;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: left;
+  color: #667085;
+  cursor: pointer;
+}
+
+.navItem.active {
+  color: #5148e5;
+  background: #f0efff;
+  font-weight: 700;
+}
+
+.profile {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 8px;
+}
+
+.profile div:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.profile span {
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #eceaff;
+  color: #5148e5;
+  font-weight: 800;
+}
+
+.main {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 42px;
+}
+
+.topbar,
+.panelHeader,
+.budgetFooter,
+.transaction,
+.transactionInfo,
+.category {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar {
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 7px;
+  font-size: 30px;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 20px;
+}
+
+h2 span {
+  color: #98a2b3;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.muted {
+  color: #7c8799;
+  margin-bottom: 0;
+}
+
+.eyebrow {
+  margin-bottom: 7px;
+  color: #98a2b3;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.addButton {
+  border: 0;
+  border-radius: 11px;
+  background: #635bff;
+  color: white;
+  padding: 12px 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.statCard,
+.panel {
+  background: white;
+  border: 1px solid #e8ebf0;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.035);
+}
+
+.statCard {
+  padding: 21px;
+  display: grid;
+  gap: 8px;
+}
+
+.statCard span,
+.statCard small {
+  color: #7c8799;
+}
+
+.statCard strong {
+  font-size: 27px;
+}
+
+.positive {
+  color: #12a66a !important;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.panel {
+  padding: 23px;
+}
+
+.progress {
+  height: 10px;
+  background: #eceef3;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 28px 0 11px;
+}
+
+.progressFill {
+  width: 69.5%;
+  height: 100%;
+  background: #635bff;
+  border-radius: inherit;
+}
+
+.budgetFooter {
+  color: #7c8799;
+  font-size: 13px;
+}
+
+.spendingPanel h2 {
+  margin-bottom: 18px;
+}
+
+.category {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f1f4;
+}
+
+.category:last-child {
+  border-bottom: 0;
+}
+
+.transactions {
+  padding-bottom: 8px;
+}
+
+.textButton {
+  border: 0;
+  background: transparent;
+  color: #635bff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.transaction {
+  padding: 15px 0;
+  border-top: 1px solid #f0f1f4;
+}
+
+.transactionInfo {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.transactionInfo > div:last-child {
+  display: grid;
+  gap: 3px;
+}
+
+.transactionInfo span {
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.transactionIcon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  background: #f6f7fa;
+  border-radius: 12px;
+}
+
+@media (max-width: 800px) {
+  .app {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    padding: 22px 16px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .addButton {
+    width: 100%;
+  }
+}
