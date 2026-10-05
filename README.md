@@ -131,3 +131,28 @@ BudgetNest is being built to demonstrate practical experience with:
 Japan
 
 Cloud / Infrastructure / AWS focused engineer building practical projects to strengthen cloud and software engineering experience.
+
+## ✅ MVP Status
+
+BudgetNest MVP includes:
+
+- User registration and login
+- JWT-protected authentication
+- Forgot/reset password by email
+- Multi-user data isolation
+- Income and expense tracking
+- Create, view, edit, and delete transactions
+- Live dashboard financial summary
+- Monthly budget management
+- Budget progress and remaining balance
+- Monthly reports and category breakdown
+- PostgreSQL database integration
+- Responsive React frontend
+
+## 🛠 Tech Stack
+
+- React + Vite
+- Node.js + Express
+- PostgreSQL
+- JWT authentication
+- Resend email API

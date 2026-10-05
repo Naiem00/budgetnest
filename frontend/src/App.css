@@ -671,3 +671,72 @@ h2 span {
     gap: 8px;
   }
 }
+
+/* Budget + Reports */
+
+.budgetManagementPanel,
+.reportPanel {
+  padding: 28px;
+}
+
+.budgetForm {
+  display: flex;
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.budgetForm input {
+  width: min(320px, 100%);
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font: inherit;
+}
+
+.budgetPageProgress {
+  margin-top: 28px;
+}
+
+.budgetWarning {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #fffaeb;
+  color: #b54708;
+  font-weight: 600;
+}
+
+.budgetWarningDanger {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.budgetDanger {
+  color: #b42318;
+}
+
+.reportCategory {
+  margin-top: 24px;
+}
+
+.reportCategoryHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 9px;
+}
+
+.reportCategoryHeader span {
+  color: #667085;
+}
+
+@media (max-width: 640px) {
+  .budgetForm {
+    flex-direction: column;
+  }
+
+  .budgetForm input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

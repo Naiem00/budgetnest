@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../api/auth'
+import { getCurrentBudget } from '../api/budgets'
 import {
   createTransaction,
   getTransactions,
@@ -25,6 +26,7 @@ function App() {
 
   const [user, setUser] = useState(null)
   const [transactions, setTransactions] = useState([])
+  const [budget, setBudget] = useState(null)
   const [summary, setSummary] = useState({
     income: 0,
     expenses: 0,
@@ -47,13 +49,15 @@ function App() {
   })
 
   const loadFinancialData = useCallback(async (token) => {
-    const [transactionsData, summaryData] = await Promise.all([
+    const [transactionsData, summaryData, budgetData] = await Promise.all([
       getTransactions(token),
       getTransactionSummary(token),
+      getCurrentBudget(token),
     ])
 
     setTransactions(transactionsData.transactions)
     setSummary(summaryData)
+    setBudget(budgetData.budget)
   }, [])
 
   useEffect(() => {
@@ -168,6 +172,15 @@ function App() {
         ? 'Bangladesh'
         : user?.country_code || ''
 
+  const budgetAmount = Number(budget?.amount || 0)
+  const budgetRemaining = budgetAmount - summary.expenses
+  const budgetPercent =
+    budgetAmount > 0
+      ? (summary.expenses / budgetAmount) * 100
+      : 0
+  const isOverBudget =
+    budgetAmount > 0 && summary.expenses > budgetAmount
+
   const expensePercent =
     summary.income > 0
       ? (summary.expenses / summary.income) * 100
@@ -208,8 +221,8 @@ function App() {
             >
               ↕ Transactions
             </button>
-            <button className="navItem">◎ Budgets</button>
-            <button className="navItem">◔ Reports</button>
+            <button className="navItem" onClick={() => navigate('/budgets')}>◎ Budgets</button>
+            <button className="navItem" onClick={() => navigate('/reports')}>◔ Reports</button>
           </nav>
         </div>
 
@@ -296,13 +309,16 @@ function App() {
           <article className="panel budgetPanel">
             <div className="panelHeader">
               <div>
-                <p className="eyebrow">MONTHLY SPENDING</p>
-                <h2>{formatMoney(summary.expenses)}</h2>
+                <p className="eyebrow">MONTHLY BUDGET</p>
+                <h2>
+                  {formatMoney(summary.expenses)}
+                  {budget && <span> / {formatMoney(budgetAmount)}</span>}
+                </h2>
               </div>
 
               <strong>
-                {summary.income > 0
-                  ? `${expensePercent.toFixed(1)}%`
+                {budget
+                  ? `${budgetPercent.toFixed(1)}%`
                   : '—'}
               </strong>
             </div>
@@ -311,7 +327,7 @@ function App() {
               <div
                 className="progressFill"
                 style={{
-                  width: `${Math.min(expensePercent, 100)}%`,
+                  width: `${Math.min(budgetPercent, 100)}%`,
                 }}
               />
             </div>
@@ -319,9 +335,11 @@ function App() {
             <div className="budgetFooter">
               <span>Spent {formatMoney(summary.expenses)}</span>
               <span>
-                {summary.income > 0
-                  ? `${formatMoney(summary.savings)} after expenses`
-                  : 'Add income to track progress'}
+                {budget
+                  ? isOverBudget
+                    ? `${formatMoney(Math.abs(budgetRemaining))} over budget`
+                    : `${formatMoney(budgetRemaining)} remaining`
+                  : 'Set a monthly budget'}
               </span>
             </div>
           </article>
