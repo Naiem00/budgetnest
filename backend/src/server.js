@@ -3,6 +3,7 @@ import cors from 'cors'
 import 'dotenv/config'
 import { checkDatabaseConnection } from './config/database.js'
 import authRoutes from './routes/auth.js'
+import transactionsRoutes from './routes/transactions.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -36,6 +37,7 @@ app.get('/api/health/db', async (req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/transactions', transactionsRoutes)
 
 app.listen(PORT, () => {
   console.log(`BudgetNest API running on http://localhost:${PORT}`)
