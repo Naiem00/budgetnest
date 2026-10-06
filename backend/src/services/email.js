@@ -1,10 +1,16 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
 export async function sendPasswordResetEmail({ email, resetUrl }) {
-  const resend = new Resend(process.env.RESEND_API_KEY)
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_APP_PASSWORD,
+    },
+  })
 
-  const { data, error } = await resend.emails.send({
-    from: 'BudgetNest <onboarding@resend.dev>',
+  const info = await transporter.sendMail({
+    from: `"BudgetNest" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Reset your BudgetNest password',
     html: `
@@ -23,17 +29,11 @@ export async function sendPasswordResetEmail({ email, resetUrl }) {
         </p>
 
         <p>This link expires in 15 minutes.</p>
-
         <p>If you didn't request this, you can safely ignore this email.</p>
-
         <p>— BudgetNest</p>
       </div>
     `,
   })
 
-  if (error) {
-    throw new Error(error.message || 'Unable to send reset email')
-  }
-
-  return data
+  return info
 }
