@@ -1,39 +1,44 @@
-import nodemailer from 'nodemailer'
+import * as brevo from '@getbrevo/brevo'
 
 export async function sendPasswordResetEmail({ email, resetUrl }) {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_APP_PASSWORD,
-    },
-  })
+  const apiInstance = new brevo.TransactionalEmailsApi()
 
-  const info = await transporter.sendMail({
-    from: `"BudgetNest" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: 'Reset your BudgetNest password',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto;">
-        <h2>Reset your BudgetNest password</h2>
+  apiInstance.setApiKey(
+    brevo.TransactionalEmailsApiApiKeys.apiKey,
+    process.env.BREVO_API_KEY
+  )
 
-        <p>We received a request to reset your password.</p>
+  const sendSmtpEmail = new brevo.SendSmtpEmail()
 
-        <p>
-          <a
-            href="${resetUrl}"
-            style="display:inline-block;padding:12px 20px;background:#111827;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;"
-          >
-            Reset password
-          </a>
-        </p>
+  sendSmtpEmail.subject = 'Reset your BudgetNest password'
 
-        <p>This link expires in 15 minutes.</p>
-        <p>If you didn't request this, you can safely ignore this email.</p>
-        <p>— BudgetNest</p>
-      </div>
-    `,
-  })
+  sendSmtpEmail.htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto;">
+      <h2>Reset your BudgetNest password</h2>
 
-  return info
+      <p>We received a request to reset your password.</p>
+
+      <p>
+        <a
+          href="${resetUrl}"
+          style="display:inline-block;padding:12px 20px;background:#111827;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;"
+        >
+          Reset password
+        </a>
+      </p>
+
+      <p>This link expires in 15 minutes.</p>
+      <p>If you didn't request this, you can safely ignore this email.</p>
+      <p>— BudgetNest</p>
+    </div>
+  `
+
+  sendSmtpEmail.sender = {
+    name: 'BudgetNest',
+    email: process.env.BREVO_SENDER_EMAIL,
+  }
+
+  sendSmtpEmail.to = [{ email }]
+
+  return apiInstance.sendTransacEmail(sendSmtpEmail)
 }
