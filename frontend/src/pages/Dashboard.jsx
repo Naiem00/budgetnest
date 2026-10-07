@@ -57,7 +57,7 @@ function App() {
 
     setTransactions(transactionsData.transactions)
     setSummary(summaryData)
-    setBudget(budgetData.budget)
+    setBudget(budgetData.summary)
   }, [])
 
   useEffect(() => {
@@ -172,14 +172,11 @@ function App() {
         ? 'Bangladesh'
         : user?.country_code || ''
 
-  const budgetAmount = Number(budget?.amount || 0)
-  const budgetRemaining = budgetAmount - summary.expenses
-  const budgetPercent =
-    budgetAmount > 0
-      ? (summary.expenses / budgetAmount) * 100
-      : 0
-  const isOverBudget =
-    budgetAmount > 0 && summary.expenses > budgetAmount
+  const budgetAmount = Number(budget?.totalBudget || 0)
+  const budgetSpent = Number(budget?.totalSpent || 0)
+  const budgetRemaining = Number(budget?.remaining || 0)
+  const budgetPercent = Number(budget?.percent || 0)
+  const isOverBudget = budgetRemaining < 0
 
   const expensePercent =
     summary.income > 0
@@ -311,13 +308,13 @@ function App() {
               <div>
                 <p className="eyebrow">MONTHLY BUDGET</p>
                 <h2>
-                  {formatMoney(summary.expenses)}
-                  {budget && <span> / {formatMoney(budgetAmount)}</span>}
+                  {formatMoney(budgetSpent)}
+                  {budgetAmount > 0 && <span> / {formatMoney(budgetAmount)}</span>}
                 </h2>
               </div>
 
               <strong>
-                {budget
+                {budgetAmount > 0
                   ? `${budgetPercent.toFixed(1)}%`
                   : '—'}
               </strong>
@@ -333,13 +330,13 @@ function App() {
             </div>
 
             <div className="budgetFooter">
-              <span>Spent {formatMoney(summary.expenses)}</span>
+              <span>Spent {formatMoney(budgetSpent)}</span>
               <span>
-                {budget
+                {budgetAmount > 0
                   ? isOverBudget
                     ? `${formatMoney(Math.abs(budgetRemaining))} over budget`
                     : `${formatMoney(budgetRemaining)} remaining`
-                  : 'Set a monthly budget'}
+                  : 'Set category budgets'}
               </span>
             </div>
           </article>

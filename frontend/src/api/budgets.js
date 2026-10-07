@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 async function request(path, token, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -23,9 +24,22 @@ export function getCurrentBudget(token) {
   return request('/budgets/current', token)
 }
 
-export function saveCurrentBudget(token, amount) {
+export function saveCurrentBudget(token, category, amount) {
   return request('/budgets/current', token, {
+    method: 'POST',
+    body: JSON.stringify({ category, amount }),
+  })
+}
+
+export function updateCurrentBudget(token, id, category, amount) {
+  return request(`/budgets/current/${id}`, token, {
     method: 'PUT',
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ category, amount }),
+  })
+}
+
+export function deleteCurrentBudget(token, id) {
+  return request(`/budgets/current/${id}`, token, {
+    method: 'DELETE',
   })
 }
