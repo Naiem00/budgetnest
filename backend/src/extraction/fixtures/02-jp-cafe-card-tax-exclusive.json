@@ -1,0 +1,20 @@
+{
+  "id": "02-jp-cafe-card-tax-exclusive",
+  "description": "Japanese cafe, credit card, tax added on top of the subtotal, long slip number and registration number must not become the total",
+  "locale": "ja-JP",
+  "lines": [
+    "Kaede Cafe",
+    "東京都渋谷区神南1-2-3",
+    "TEL 03-1234-5678",
+    "2026/09/28 18:42",
+    "コーヒー x2 ¥900",
+    "ケーキ ¥550",
+    "小計 ¥1,450",
+    "消費税(10%) ¥145",
+    "お会計 ¥1,595",
+    "クレジット ¥1,595",
+    "伝票番号 20260928184201",
+    "T9876543210987"
+  ],
+  "expected": { "merchant": "Kaede Cafe", "total": 1595, "date": "2026-09-28", "currency": "JPY" }
+}

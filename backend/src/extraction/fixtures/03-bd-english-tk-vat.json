@@ -1,0 +1,22 @@
+{
+  "id": "03-bd-english-tk-vat",
+  "description": "Bangladesh English receipt, Tk amounts with decimals, DD/MM/YYYY date with an unambiguous day, VAT, cash and change, phone and BIN numbers",
+  "locale": "bn-BD",
+  "lines": [
+    "Shapla Super Shop",
+    "House 12, Road 5, Dhanmondi, Dhaka",
+    "Phone: 01712-345678",
+    "BIN: 001234567-0101",
+    "Date: 25/09/2026  Time: 14:20",
+    "Trx ID: 8841209934",
+    "Rice 5kg        Tk 450.00",
+    "Cooking Oil 1L  Tk 190.00",
+    "Sugar 1kg       Tk 130.00",
+    "Subtotal        770.00",
+    "VAT (5%)         38.50",
+    "Grand Total  Tk 808.50",
+    "Cash           1000.00",
+    "Change          191.50"
+  ],
+  "expected": { "merchant": "Shapla Super Shop", "total": 808.5, "date": "2026-09-25", "currency": "BDT" }
+}

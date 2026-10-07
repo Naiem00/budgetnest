@@ -1,0 +1,16 @@
+{
+  "id": "04-bd-bengali-digits",
+  "description": "Bangladesh receipt with Bengali labels and Bengali digits, taka sign, cash and change",
+  "locale": "bn-BD",
+  "lines": [
+    "Dhaka Fresh Bakery",
+    "তারিখ: ২৫-০৯-২০২৬",
+    "কেক ৳৫০০",
+    "পেস্ট্রি ৳২৫০",
+    "রুটি ৳৫০",
+    "মোট ৳৮০০",
+    "নগদ ৳১,০০০",
+    "ফেরত ৳২০০"
+  ],
+  "expected": { "merchant": "Dhaka Fresh Bakery", "total": 800, "date": "2026-09-25", "currency": "BDT" }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "01-jp-supermarket-cash",
+  "description": "Japanese supermarket, cash payment, subtotal + tax lines, phone number and invoice registration number that must not become the total",
+  "locale": "ja-JP",
+  "lines": [
+    "MIDORI MART",
+    "青葉店",
+    "TEL 045-123-4567",
+    "登録番号 T1234567890123",
+    "2026年10月04日(日) 11:30",
+    "レジ0003 No.004512",
+    "牛乳 ¥198",
+    "食パン ¥168",
+    "卵 ¥248",
+    "小計 ¥614",
+    "内消費税(8%) ¥45",
+    "合計 ¥614",
+    "お預り ¥1,000",
+    "お釣り ¥386"
+  ],
+  "expected": { "merchant": "MIDORI MART", "total": 614, "date": "2026-10-04", "currency": "JPY" }
+}
