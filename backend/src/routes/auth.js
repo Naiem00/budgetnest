@@ -5,14 +5,29 @@ import { createHash, randomBytes } from 'node:crypto'
 import { pool } from '../config/database.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sendPasswordResetEmail } from '../services/email.js'
+import { getFrontendUrl } from '../services/frontendUrl.js'
 
 const router = Router()
+const FAILED_WINDOW_MS = 15 * 60 * 1000
+const attempts = new Map()
+// Process-local safeguard; distributed production needs shared rate limiting.
+function rateLimit(req,res,next) {
+  const key = `${req.ip}:${req.path}`
+  const now=Date.now()
+  const list=(attempts.get(key)||[]).filter(t=>now-t<FAILED_WINDOW_MS)
+  if(list.length>=10) return res.status(429).json({message:'Too many requests. Try again later.'})
+  list.push(now);attempts.set(key,list)
+  if(attempts.size>5000) for(const [k,v] of attempts) if(v[v.length-1]<now-FAILED_WINDOW_MS)attempts.delete(k)
+  next()
+}
+router.use(['/register','/login','/forgot-password','/reset-password','/change-password'],rateLimit)
+
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, countryCode, currencyCode } = req.body
+    const { name, email, password, countryCode, currencyCode } = req.body || {}
 
-    if (!name || !email || !password) {
+    if (typeof name !== 'string' || !name.trim() || name.trim().length > 100 || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof password !== 'string' || !['JPY','BDT'].includes(currencyCode || 'JPY') || (countryCode && !/^[A-Z]{2}$/.test(countryCode))) {
       return res.status(400).json({
         message: 'Name, email and password are required',
       })
@@ -69,9 +84,9 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { email, password } = req.body || {}
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
       return res.status(400).json({
         message: 'Email and password are required',
       })
@@ -80,7 +95,7 @@ router.post('/login', async (req, res) => {
     const normalizedEmail = email.trim().toLowerCase()
 
     const result = await pool.query(
-      `SELECT id, name, email, password_hash, country_code, currency_code
+      `SELECT id, name, email, password_hash, country_code, currency_code, auth_token_version
        FROM users
        WHERE email = $1`,
       [normalizedEmail]
@@ -106,7 +121,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id },
+      { userId: user.id, tokenVersion: user.auth_token_version },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     )
@@ -162,9 +177,9 @@ router.get('/me', requireAuth, async (req, res) => {
 
 router.post('/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body
+    const { email } = req.body || {}
 
-    if (!email) {
+    if (typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({
         message: 'Email is required',
       })
@@ -200,8 +215,10 @@ router.post('/forgot-password', async (req, res) => {
        WHERE id = $3`,
       [resetTokenHash, expiresAt, result.rows[0].id]
     )
-    const frontendUrl =
-      process.env.FRONTEND_URL || 'http://localhost:5173'
+    const frontendUrl = getFrontendUrl(req)
+    if (process.env.NODE_ENV === 'production' && (!process.env.FRONTEND_URL || /localhost|127\.0\.0\.1/.test(frontendUrl))) {
+      throw new Error('Set FRONTEND_URL to the HTTPS production frontend before emailing reset links')
+    }
 
     const resetUrl =
       `${frontendUrl}/reset-password?token=${resetToken}`
@@ -240,9 +257,9 @@ router.post('/forgot-password', async (req, res) => {
 
 router.post('/reset-password', async (req, res) => {
   try {
-    const { token, password } = req.body
+    const { token, password } = req.body || {}
 
-    if (!token || !password) {
+    if (typeof token !== 'string' || typeof password !== 'string' || !/^[a-f0-9]{64}$/.test(token) || !password) {
       return res.status(400).json({
         message: 'Reset token and new password are required',
       })
@@ -274,14 +291,17 @@ router.post('/reset-password', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12)
 
-    await pool.query(
+    const updated = await pool.query(
       `UPDATE users
        SET password_hash = $1,
            password_reset_token_hash = NULL,
-           password_reset_expires_at = NULL
-       WHERE id = $2`,
-      [passwordHash, result.rows[0].id]
+           password_reset_expires_at = NULL,
+           auth_token_version = auth_token_version + 1
+       WHERE id = $2 AND password_reset_token_hash = $3 AND password_reset_expires_at > NOW()
+       RETURNING id`,
+      [passwordHash, result.rows[0].id, resetTokenHash]
     )
+    if (!updated.rows.length) return res.status(400).json({message:'Reset link is invalid or has expired'})
 
     res.json({
       message: 'Password reset successfully',
@@ -293,6 +313,30 @@ router.post('/reset-password', async (req, res) => {
       message: 'Unable to reset password',
     })
   }
+})
+
+
+router.patch('/profile', requireAuth, async (req,res)=>{
+  const { name,countryCode,currencyCode }=req.body || {}
+  if(typeof name!=='string' || !name.trim() || name.trim().length>100 || !['JPY','BDT'].includes(currencyCode) || (countryCode && !/^[A-Z]{2}$/.test(countryCode))) {
+    return res.status(400).json({message:'Provide a name, country code, and JPY or BDT currency'})
+  }
+  try {
+    const {rows}=await pool.query(`UPDATE users SET name=$1,country_code=$2,currency_code=$3 WHERE id=$4 RETURNING id,name,email,country_code,currency_code,created_at`,[name.trim(),countryCode || null,currencyCode,req.user.id])
+    if(!rows.length)return res.status(404).json({message:'User not found'})
+    res.json({message:'Profile updated; historical amounts keep their recorded currency',user:rows[0]})
+  }catch(err){console.error('Profile error',err);res.status(500).json({message:'Unable to update profile'})}
+})
+router.post('/change-password',requireAuth,async(req,res)=>{
+  const { currentPassword,newPassword }=req.body||{}
+  if(typeof currentPassword!=='string' || typeof newPassword!=='string' || newPassword.length<8 || newPassword.length>128)return res.status(400).json({message:'Provide current password and a new password (8–128 characters)'})
+  try{
+    const {rows}=await pool.query('SELECT password_hash FROM users WHERE id=$1',[req.user.id])
+    if(!rows.length || !await bcrypt.compare(currentPassword,rows[0].password_hash))return res.status(401).json({message:'Current password is incorrect'})
+    const hash=await bcrypt.hash(newPassword,12)
+    await pool.query('UPDATE users SET password_hash=$1,password_reset_token_hash=NULL,password_reset_expires_at=NULL,auth_token_version=auth_token_version+1 WHERE id=$2',[hash,req.user.id])
+    res.json({message:'Password updated. Please sign in again.'})
+  }catch(err){console.error('Change password error',err);res.status(500).json({message:'Unable to update password'})}
 })
 
 export default router

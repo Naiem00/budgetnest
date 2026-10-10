@@ -1,158 +1,73 @@
-# BudgetNest 💠
+# BudgetNest — Personal Finance
 
-BudgetNest is a modern full-stack personal finance tracker for managing income, expenses, savings, and transaction history.
+Existing React/Vite + Express + PostgreSQL finance tracker. This code is based on the user's **October 10 local project snapshot**, not a direct checkout of the older GitHub `feature/full-budgetnest` branch. Preserve your backups when adopting it.
 
-## 🚀 Current Status
+**Start with `START_HERE.md` for the safe rollout and staging checklist.**
 
-**Day 4 completed.**
+## Features
+- Registration, login, account/password reset, profile preferences and password change
+- Income/expense transaction creation, editing, deletion, search, category/type/date filters, and date/amount sorting
+- Category monthly budgets with historical month selection, spent/remaining, 80% warnings and overspending alerts
+- Dashboard with monthly income, expenses, savings, recorded all-time net balance, recent transactions, budget progress and category breakdown
+- Monthly/yearly reporting and custom date ranges from saved transactions
+- JPY/BDT preferences, with **recorded currency retained per transaction/budget**; no FX conversion
+- Responsive navigation for mobile and desktop
 
-BudgetNest now uses real PostgreSQL persistence for user accounts and financial transactions. The dashboard calculates income, expenses, and savings from the logged-in user's data.
+## Requirements
+Node.js 22+, PostgreSQL (Supabase supported). `npm ci` in `backend/` and `frontend/`. Example environment variables are in `backend/.env.example` and `frontend/.env.example`; keep real `.env` files private.
 
-## ✨ Features
+Environment variables (never commit real `.env`):
 
-- User registration and login
-- JWT-based authentication
-- Protected frontend and backend routes
-- Secure password hashing with bcryptj- Forgot-password and email-based reset flow
-- Expiring password reset tokens
-- Live monthly income, expense, and savings
-- Add income and expense transactions
-- Edit existing transactions
-- Delete transactions with confirmation
-- Transaction history
-- All / Income / Expenses filters
-- Category-spending summary
-- JPY and BDT-ready currency formatting
-- User-specific financial data isolation
+**Backend**: `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL` (public HTTPS origin for password links), optional `FRONTEND_ORIGINS` (comma-separated allowed origins), `PORT`, `NODE_ENV`, configured email provider variables used by `backend/src/services/email.js` (`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `RESEND_API_KEY`, `EMAIL_USER`, `EMAIL_APP_PASSWORD`).
 
-## 📦 Tech Stack
+**Frontend**: `VITE_API_URL` set to the public backend's `/api` base, e.g. `https://your-api.example/api` in production; in development Vite proxies `/api` to `localhost:3000`.
 
-**Frontend**
-- React
-- Vite
-- React Router
-- JavaScript
-- CSS
+### Local development
+```bash
+cd backend && npm ci && npm run dev
+# separate terminal
+cd frontend && npm ci && npm run dev
+```
 
-**Backend**
-- Node.js
-- Express
-- REST API
-- JWT
-- bcryptjs
-- Resend
+### Database migration (mandatory before launching updated backend)
+**Take a Supabase/database backup first.** Run the read-only inspection at `docs/DB_READONLY_AUDIT.sql` against staging, then inspect current schema and apply these in order if not already applied:
+1. `backend/src/db/migrations/001_initial_schema.sql` (new installs)
+2. `002_password_reset.sql`
+3. `003_category_budgets.sql` — adds category to historic budgets (`Other` default) and replaces obsolete one-budget-per-month uniqueness
+4. `004_preserve_currency.sql` — adds per-record currency and per-currency indexes; **intentionally stops** if existing transactions or budgets have an unknown historical currency. For a populated DB, add `currency_code` columns and assign the verified original currency to existing rows under a reviewed, separately backed-up migration first. Never infer original currency from the current preference or silently convert amounts.
+5. `005_auth_token_version.sql` — adds token revocation counter for password updates/resets. Apply before deploying the updated auth middleware.
 
-**Database**
-- PostgreSQL
-- PSL migrations
-- pg connection pool
+Apply only after reviewing migration effects against your real database. No migration is run automatically and no actual production data was modified in preparing this package. Existing `transaction` and `budget` rows remain intact.
 
-## 🔥 API Overview
+### Authentication and currency
+Back-end operations use JWT auth and SQL `user_id` scoping. Passwords use bcrypt and password-reset tokens are stored hashed. Sensitive routes use an in-process limiter; production deployments with multiple instances should switch to a shared rate limit store. The frontend stores login JWT in localStorage; cookie-based sessions are a future security improvement.
 
-### Authentication
+A changed currency preference does **not** convert historical transactions. Historical transaction rows display their original currency; dashboard/reports/budgets aggregate only the currently selected currency. Do not treat displayed net balance as a bank reconciliation.
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| POST | `/api/auth/register` | Create account |
-| POST | `/api/auth/login` | Sign in |
-| GET | `/api/auth/me` | Get current user |
-| POST | `/api/auth/forgot-password` | Request password reset |
-| POST | `/api/auth/reset-password` | Reset password |
+### Testing
+```bash
+cd backend && npm test
+cd frontend && npm test
+cd frontend && npm run build
+cd frontend && npm run lint
+# with the local app running and Playwright browser binaries installed:
+cd frontend && npx playwright test
+```
 
-### Transactions
+`node --test frontend/src/utils/report.test.js` checks report maths without a browser. Browser/mobile, production database, cross-user authorization, reset email delivery and deployed hosting require integration testing with test accounts. See `docs/DEPLOYMENT_CHECKLIST.md`.
 
-| method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/api/transactions` | Get user's transactions |
-| GET | `/api/transactions/summary` | Get monthly summary |
-| POST | `/api/transactions` | Create transaction |
-| PUT | `/api/transactions/:id` | Update transaction |
-| DELETE | `/api/transactions/:id` | Delete transaction |
+### Optional AWS portfolio roadmap (not provisioned)
+1. CI: GitHub Actions with `npm ci`, unit tests, ESLint/oxlint and Vite build.
+2. Containerize Express and deploy to AWS ECS/Fargate when approved; keep keys in Secrets Manager.
+3. React static deployment to S3 + CloudFront; configure public API URL and CORS.
+4. Database: migrate to managed RDS if required, with backups, private networking and monitoring.
+5. Add deployment previews and staging, security monitoring, rollback procedure, cost budgets and alerts *before* enabling paid AWS resources.
 
-## 🔑 security
+## Screenshots checklist
+Capture dashboard (populated and empty), transactions and filters, category budgets/warnings, monthly and yearly reports, settings/currency, reset flow (without tokens), and iPhone/Android navigation after real-browser verification.
 
-- Passwords are hashed before storage.
-- API routes are protected with JWT authentication.
-- Transaction queries are scoped to the authenticated user.
-- Password reset tokens are hashed and expire.
+## Repository notes
+`Naiem00/budgetnest`, target branch `feature/full-budgetnest`. The source snapshot used here differs from the remote branch. **Do not copy these files over an unreviewed branch or force-push.** Apply as a reviewed PR after reconciling the branch histories.
 
-## 🗄️ Database
-
-BudgetNest currently uses three main PostgreSQL tables:
-
-- `users` — accounts, country and currency preferences
-- `transactions` — user-owned income and expense records
-- `budgets` — monthly budget data for the upcoming budget feature
-
-## 🛠️ Local Development
-
-Backend:
-
-    cd backend
-    npm install
-    npm run dev
-
-Frontend in another terminal:
-
-    cd frontend
-    npm install
-    npm run dev
-
-The backend runs on port `3000` and the Vite frontend runs on port `5173` by default.
-
-## 🗺️ Development Progress
-
-| Stage | Status | Main Work |
-|---|---|---|
-| Day 1 | ✅ Completed | Project foundation and PostgreSQL setup |
-| Day 2 | ✅ Completed | Application UI and authentication |
-| Day 3 | ✅ Completed | Password recovery and email reset |
-| Day 4 | ✅ Completed | Transaction CRUD, live dashboard and transaction history |
-| Day 5 | ⏳ Next | Monthly budget management |
-| Later | 📋 Planned | Reports, analytics and charts |
-| Later | 📋 Planned | AWS deployment and CI/CD |
-
-## 🎯 Engineering Goals
-
-BudgetNest is being built to demonstrate practical experience with:
-
-- Full-stack application development
-- REST API design
-- Authentication and authorization
-- PostgreSQL database design
-- User-level data isolation
-- React frontend development
-- Frontend/backend integration
-- Cloud-ready application architecture
-
-## 👤 Author
-
-**Naiem Naimur Rahman**  
-Japan
-
-Cloud / Infrastructure / AWS focused engineer building practical projects to strengthen cloud and software engineering experience.
-
-## ✅ MVP Status
-
-BudgetNest MVP includes:
-
-- User registration and login
-- JWT-protected authentication
-- Forgot/reset password by email
-- Multi-user data isolation
-- Income and expense tracking
-- Create, view, edit, and delete transactions
-- Live dashboard financial summary
-- Monthly budget management
-- Budget progress and remaining balance
-- Monthly reports and category breakdown
-- PostgreSQL database integration
-- Responsive React frontend
-
-## 🛠 Tech Stack
-
-- React + Vite
-- Node.js + Express
-- PostgreSQL
-- JWT authentication
-- Resend email API
+### Release hardening
+Migration `005_auth_token_version.sql` adds an additive revocation counter. Apply it after 004, before deploying the new API server. Old tokens remain accepted until an account changes its password; any previous sessions are then revoked. Dashboard summary accepts an optional `YYYY-MM` parameter to avoid server timezone boundary mistakes.

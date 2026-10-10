@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+import { API_BASE_URL, readApiResponse } from './apiBase'
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -9,13 +9,7 @@ async function request(path, options = {}) {
     },
   })
 
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong')
-  }
-
-  return data
+  return readApiResponse(response)
 }
 
 export function registerUser(formData) {
@@ -52,4 +46,11 @@ export function resetPassword(token, password) {
     method: 'POST',
     body: JSON.stringify({ token, password }),
   })
+}
+
+export function updateProfile(token, details) {
+  return request('/auth/profile', { method: 'PATCH', headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(details) })
+}
+export function changePassword(token, currentPassword, newPassword) {
+  return request('/auth/change-password', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({currentPassword,newPassword}) })
 }

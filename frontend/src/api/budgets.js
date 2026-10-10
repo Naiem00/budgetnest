@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+import { API_BASE_URL, readApiResponse } from './apiBase'
 
 async function request(path, token, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -11,35 +10,29 @@ async function request(path, token, options = {}) {
     },
   })
 
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong')
-  }
-
-  return data
+  return readApiResponse(response)
 }
 
-export function getCurrentBudget(token) {
-  return request('/budgets/current', token)
+export function getCurrentBudget(token, month) {
+  return request(`/budgets/current${month ? `?month=${encodeURIComponent(month)}` : ''}`, token)
 }
 
-export function saveCurrentBudget(token, category, amount) {
-  return request('/budgets/current', token, {
+export function saveCurrentBudget(token, category, amount, month) {
+  return request(`/budgets/current${month ? `?month=${encodeURIComponent(month)}` : ''}`, token, {
     method: 'POST',
     body: JSON.stringify({ category, amount }),
   })
 }
 
-export function updateCurrentBudget(token, id, category, amount) {
-  return request(`/budgets/current/${id}`, token, {
+export function updateCurrentBudget(token, id, category, amount, month) {
+  return request(`/budgets/current/${id}${month ? `?month=${encodeURIComponent(month)}` : ''}`, token, {
     method: 'PUT',
     body: JSON.stringify({ category, amount }),
   })
 }
 
-export function deleteCurrentBudget(token, id) {
-  return request(`/budgets/current/${id}`, token, {
+export function deleteCurrentBudget(token, id, month) {
+  return request(`/budgets/current/${id}${month ? `?month=${encodeURIComponent(month)}` : ''}`, token, {
     method: 'DELETE',
   })
 }

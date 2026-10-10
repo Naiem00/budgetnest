@@ -5,12 +5,22 @@ import { checkDatabaseConnection } from './config/database.js'
 import authRoutes from './routes/auth.js'
 import transactionsRoutes from './routes/transactions.js'
 import budgetsRoutes from './routes/budgets.js'
+import {requireAuth} from './middleware/auth.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.use(cors())
-app.use(express.json())
+// In production require an explicitly configured list of permitted frontend origins.
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || process.env.FRONTEND_URL || '')
+  .split(',').map(x => x.trim().replace(/\/$/, '')).filter(Boolean)
+app.use(cors({ origin(origin, callback) {
+  if (!origin || allowedOrigins.includes(origin) ||
+      (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin))) {
+    return callback(null, true)
+  }
+  callback(new Error('Origin not allowed'))
+} }))
+app.use(express.json({ limit: '64kb' }))
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -19,7 +29,7 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-app.get('/api/health/db', async (req, res) => {
+app.get('/api/health/db', requireAuth, async (req, res) => {
   try {
     const database = await checkDatabaseConnection()
 
@@ -40,6 +50,12 @@ app.get('/api/health/db', async (req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/transactions', transactionsRoutes)
 app.use('/api/budgets', budgetsRoutes)
+
+app.use((err,req,res,next) => {
+  if (err?.message === 'Origin not allowed') return res.status(403).json({ message:'Origin not allowed' })
+  console.error('Unhandled API error',err)
+  res.status(500).json({message:'An unexpected server error occurred'})
+})
 
 app.listen(PORT, () => {
   console.log(`BudgetNest API running on http://localhost:${PORT}`)

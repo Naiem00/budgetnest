@@ -7,6 +7,7 @@ import {
   saveCurrentBudget,
   updateCurrentBudget,
 } from '../api/budgets'
+import { localMonth } from '../utils/calendar'
 import '../App.css'
 
 const icons = {
@@ -24,6 +25,7 @@ function Budgets() {
   const navigate = useNavigate()
 
   const [user, setUser] = useState(null)
+  const [month, setMonth] = useState(localMonth())
   const [budgets, setBudgets] = useState([])
   const [categories, setCategories] = useState([])
   const [summary, setSummary] = useState({
@@ -42,7 +44,7 @@ function Budgets() {
   const [message, setMessage] = useState('')
 
   const loadBudgets = useCallback(async (token) => {
-    const data = await getCurrentBudget(token)
+    const data = await getCurrentBudget(token, month)
 
     setBudgets(data.budgets || [])
     setCategories(data.categories || [])
@@ -54,7 +56,7 @@ function Budgets() {
         percent: 0,
       }
     )
-  }, [])
+  }, [month])
 
   useEffect(() => {
     const token = localStorage.getItem('budgetnest_token')
@@ -66,7 +68,7 @@ function Budgets() {
 
     Promise.all([
       getCurrentUser(token),
-      getCurrentBudget(token),
+      getCurrentBudget(token, month),
     ])
       .then(([userData, budgetData]) => {
         setUser(userData.user)
@@ -81,9 +83,9 @@ function Budgets() {
           }
         )
       })
-      .catch(() => navigate('/login'))
+      .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [navigate])
+  }, [navigate, month])
 
   function money(value) {
     const currency = user?.currency_code || 'JPY'
@@ -120,14 +122,16 @@ function Budgets() {
           token,
           editingId,
           category,
-          Number(amount)
+          Number(amount),
+          month
         )
         setMessage('Budget updated successfully.')
       } else {
         await saveCurrentBudget(
           token,
           category,
-          Number(amount)
+          Number(amount),
+          month
         )
         setMessage('Budget added successfully.')
       }
@@ -160,7 +164,7 @@ function Budgets() {
     setMessage('')
 
     try {
-      await deleteCurrentBudget(token, id)
+      await deleteCurrentBudget(token, id, month)
 
       if (editingId === id) {
         resetForm()
@@ -210,6 +214,7 @@ function Budgets() {
             >
               ◔ Reports
             </button>
+            <button className="navItem" onClick={() => navigate('/settings')}>⚙ Settings</button>
           </nav>
         </div>
       </aside>
@@ -224,6 +229,8 @@ function Budgets() {
             </p>
           </div>
         </header>
+
+        <label className="monthPicker">Budget month <input aria-label="Budget month" type="month" value={month} onChange={event => {setMonth(event.target.value);resetForm()}} /></label>
 
         <section className="stats">
           <article className="statCard">
@@ -294,7 +301,7 @@ function Budgets() {
             <input
               type="number"
               min="1"
-              step="1"
+              step="0.01"
               required
               placeholder="30000"
               value={amount}
