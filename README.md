@@ -1,5 +1,13 @@
 # BudgetNest — Personal Finance
+## Creator & Developer
 
+**Naiem Naimur Rahman**
+
+- GitHub: [@Naiem00](https://github.com/Naiem00)
+- Project: BudgetNest — Personal Finance Management
+- Built with React, Node.js, Express & PostgreSQL
+- Developed in Japan 🇯🇵
+  
 Existing React/Vite + Express + PostgreSQL finance tracker. This code is based on the user's **October 10 local project snapshot**, not a direct checkout of the older GitHub `feature/full-budgetnest` branch. Preserve your backups when adopting it.
 
 **Start with `START_HERE.md` for the safe rollout and staging checklist.**
