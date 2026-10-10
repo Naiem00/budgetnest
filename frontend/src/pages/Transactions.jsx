@@ -6,6 +6,7 @@ import {
   getTransactions,
   updateTransaction,
 } from '../api/transactions'
+import { filterTransactions } from '../utils/transactions'
 import '../App.css'
 
 const categoryIcons = {
@@ -26,6 +27,11 @@ function Transactions() {
   const [user, setUser] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [filter, setFilter] = useState('all')
+  const [query, setQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [sort, setSort] = useState('date-desc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -59,9 +65,8 @@ function Transactions() {
 
         setUser(userData.user)
         setTransactions(transactionData.transactions)
-      } catch {
-        localStorage.removeItem('budgetnest_token')
-        navigate('/login')
+      } catch (err) {
+        setError(err.message || 'Unable to load transactions')
       } finally {
         setLoading(false)
       }
@@ -70,13 +75,11 @@ function Transactions() {
     loadPage()
   }, [navigate])
 
-  const filteredTransactions = useMemo(() => {
-    if (filter === 'all') return transactions
-
-    return transactions.filter(
-      (transaction) => transaction.type === filter
-    )
-  }, [transactions, filter])
+  const categories = useMemo(() => [...new Set(transactions.map(t => t.category))].sort(), [transactions])
+  const filteredTransactions = useMemo(() => filterTransactions(transactions, {
+    type: filter, category: categoryFilter, from: startDate,
+    to: endDate, query, sort,
+  }), [transactions,filter,categoryFilter,startDate,endDate,query,sort])
 
   const countryName =
     user?.country_code === 'JP'
@@ -85,8 +88,8 @@ function Transactions() {
         ? 'Bangladesh'
         : user?.country_code || ''
 
-  function formatMoney(amount, type) {
-    const currency = user?.currency_code || 'JPY'
+  function formatMoney(amount, type, recordCurrency) {
+    const currency = recordCurrency || user?.currency_code || 'JPY'
     const numericAmount = Number(amount) || 0
 
     const formatted = new Intl.NumberFormat(
@@ -243,6 +246,7 @@ function Transactions() {
 
             <button className="navItem" onClick={() => navigate('/budgets')}>◎ Budgets</button>
             <button className="navItem" onClick={() => navigate('/reports')}>◔ Reports</button>
+            <button className="navItem" onClick={() => navigate('/settings')}>⚙ Settings</button>
           </nav>
         </div>
 
@@ -319,6 +323,13 @@ function Transactions() {
           </span>
         </section>
 
+        <section className="filterGrid" aria-label="Transaction search and filters">
+          <label>Search<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Merchant, note, amount..." /></label>
+          <label>Category<select value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}><option value="all">All categories</option>{categories.map(c=><option key={c}>{c}</option>)}</select></label>
+          <label>From<input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} /></label>
+          <label>To<input type="date" min={startDate||undefined} value={endDate} onChange={e=>setEndDate(e.target.value)} /></label>
+          <label>Sort<select value={sort} onChange={e=>setSort(e.target.value)}><option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option></select></label>
+        </section>
         <section className="panel transactionHistoryPanel">
           {loading ? (
             <p className="muted">Loading transactions...</p>
@@ -363,7 +374,7 @@ function Transactions() {
                   >
                     {formatMoney(
                       transaction.amount,
-                      transaction.type
+                      transaction.type, transaction.currency_code
                     )}
                   </strong>
 

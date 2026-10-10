@@ -7,6 +7,7 @@ import {
   getTransactions,
   getTransactionSummary,
 } from '../api/transactions'
+import { localMonth, localDay } from '../utils/calendar'
 import '../App.css'
 
 const categoryIcons = {
@@ -37,6 +38,7 @@ function App() {
   const [showTransactionForm, setShowTransactionForm] = useState(false)
   const [savingTransaction, setSavingTransaction] = useState(false)
   const [transactionError, setTransactionError] = useState('')
+  const [loadError, setLoadError] = useState('')
 
   const [form, setForm] = useState({
     type: 'expense',
@@ -45,19 +47,20 @@ function App() {
     merchant: '',
     paymentMethod: 'Cash',
     note: '',
-    transactionDate: new Date().toLocaleDateString('en-CA'),
+    transactionDate: localDay(),
   })
 
   const loadFinancialData = useCallback(async (token) => {
     const [transactionsData, summaryData, budgetData] = await Promise.all([
       getTransactions(token),
-      getTransactionSummary(token),
-      getCurrentBudget(token),
+      getTransactionSummary(token, localMonth()),
+      getCurrentBudget(token, localMonth()),
     ])
 
-    setTransactions(transactionsData.transactions)
+    const profile = await getCurrentUser(token)
+    setTransactions(transactionsData.transactions.filter(t => (t.currency_code || profile.user.currency_code) === profile.user.currency_code))
     setSummary(summaryData)
-    setBudget(budgetData.budget)
+    setBudget(budgetData.summary)
   }, [])
 
   useEffect(() => {
@@ -74,9 +77,8 @@ function App() {
         setUser(userData.user)
 
         await loadFinancialData(token)
-      } catch {
-        localStorage.removeItem('budgetnest_token')
-        navigate('/login')
+      } catch (err) {
+        setLoadError(err.message || 'Unable to load dashboard. Please try again.')
       } finally {
         setLoading(false)
       }
@@ -154,7 +156,7 @@ function App() {
         merchant: '',
         paymentMethod: 'Cash',
         note: '',
-        transactionDate: new Date().toLocaleDateString('en-CA'),
+        transactionDate: localDay(),
       })
 
       setShowTransactionForm(false)
@@ -172,14 +174,11 @@ function App() {
         ? 'Bangladesh'
         : user?.country_code || ''
 
-  const budgetAmount = Number(budget?.amount || 0)
-  const budgetRemaining = budgetAmount - summary.expenses
-  const budgetPercent =
-    budgetAmount > 0
-      ? (summary.expenses / budgetAmount) * 100
-      : 0
-  const isOverBudget =
-    budgetAmount > 0 && summary.expenses > budgetAmount
+  const budgetAmount = Number(budget?.totalBudget || 0)
+  const budgetSpent = Number(budget?.totalSpent || 0)
+  const budgetRemaining = Number(budget?.remaining || 0)
+  const budgetPercent = Number(budget?.percent || 0)
+  const isOverBudget = budgetRemaining < 0
 
   const expensePercent =
     summary.income > 0
@@ -191,8 +190,10 @@ function App() {
       ? (summary.savings / summary.income) * 100
       : 0
 
+  const currentMonth = localMonth()
+  const allTimeBalance = transactions.reduce((sum,t) => sum + (t.type === 'income' ? 1 : -1) * Number(t.amount), 0)
   const spendingByCategory = transactions
-    .filter((transaction) => transaction.type === 'expense')
+    .filter((transaction) => transaction.type === 'expense' && String(transaction.transaction_date).slice(0,7) === currentMonth)
     .reduce((totals, transaction) => {
       totals[transaction.category] =
         (totals[transaction.category] || 0) + Number(transaction.amount)
@@ -223,6 +224,7 @@ function App() {
             </button>
             <button className="navItem" onClick={() => navigate('/budgets')}>◎ Budgets</button>
             <button className="navItem" onClick={() => navigate('/reports')}>◔ Reports</button>
+            <button className="navItem" onClick={() => navigate('/settings')}>⚙ Settings</button>
           </nav>
         </div>
 
@@ -275,6 +277,7 @@ function App() {
           </button>
         </header>
 
+        {loadError && <p role="alert" className="auth-error">{loadError}</p>}
         <section className="stats">
           <article className="statCard">
             <span>Monthly income</span>
@@ -305,19 +308,20 @@ function App() {
           </article>
         </section>
 
+        <section className="panel" aria-label="Current balance"><p className="eyebrow">CURRENT RECORDED BALANCE</p><h2>{formatMoney(allTimeBalance)}</h2><p className="muted">All-time income minus expenses in {user?.currency_code || 'JPY'}. This is not a bank balance.</p></section>
         <section className="grid">
           <article className="panel budgetPanel">
             <div className="panelHeader">
               <div>
                 <p className="eyebrow">MONTHLY BUDGET</p>
                 <h2>
-                  {formatMoney(summary.expenses)}
-                  {budget && <span> / {formatMoney(budgetAmount)}</span>}
+                  {formatMoney(budgetSpent)}
+                  {budgetAmount > 0 && <span> / {formatMoney(budgetAmount)}</span>}
                 </h2>
               </div>
 
               <strong>
-                {budget
+                {budgetAmount > 0
                   ? `${budgetPercent.toFixed(1)}%`
                   : '—'}
               </strong>
@@ -333,15 +337,16 @@ function App() {
             </div>
 
             <div className="budgetFooter">
-              <span>Spent {formatMoney(summary.expenses)}</span>
+              <span>Spent {formatMoney(budgetSpent)}</span>
               <span>
-                {budget
+                {budgetAmount > 0
                   ? isOverBudget
                     ? `${formatMoney(Math.abs(budgetRemaining))} over budget`
                     : `${formatMoney(budgetRemaining)} remaining`
-                  : 'Set a monthly budget'}
+                  : 'Set category budgets'}
               </span>
             </div>
+          {isOverBudget && <p role="alert" className="budgetWarning budgetWarningDanger">Budget exceeded by {formatMoney(Math.abs(budgetRemaining))}.</p>}
           </article>
 
           <article className="panel spendingPanel">

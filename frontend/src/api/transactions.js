@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+import { API_BASE_URL, readApiResponse } from './apiBase'
 
 async function request(path, token, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -10,21 +10,15 @@ async function request(path, token, options = {}) {
     },
   })
 
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong')
-  }
-
-  return data
+  return readApiResponse(response)
 }
 
 export function getTransactions(token) {
   return request('/transactions', token)
 }
 
-export function getTransactionSummary(token) {
-  return request('/transactions/summary', token)
+export function getTransactionSummary(token, month) {
+  return request(`/transactions/summary${month ? `?month=${encodeURIComponent(month)}` : ''}`, token)
 }
 
 export function createTransaction(token, transaction) {

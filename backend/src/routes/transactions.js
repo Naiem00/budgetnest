@@ -1,3 +1,5 @@
+import { validDate, validMoney, validCategory } from '../services/finance.js'
+import { parseMonth } from '../services/month.js'
 import { Router } from 'express'
 import { pool } from '../config/database.js'
 import { requireAuth } from '../middleware/auth.js'
@@ -17,6 +19,7 @@ router.get('/', async (req, res) => {
          id,
          type,
          amount,
+         currency_code,
          category,
          merchant,
          payment_method,
@@ -47,6 +50,11 @@ router.get('/', async (req, res) => {
  * Current calendar month's income, expenses and savings.
  */
 router.get('/summary', async (req, res) => {
+  // The client supplies its current calendar month; do not silently use the server's UTC month.
+  const month = req.query.month == null ? null : parseMonth(req.query.month)
+  if (req.query.month != null && !month) {
+    return res.status(400).json({ message: 'Month must use YYYY-MM' })
+  }
   try {
     const result = await pool.query(
       `SELECT
@@ -60,10 +68,11 @@ router.get('/summary', async (req, res) => {
          ) AS expenses
        FROM transactions
        WHERE user_id = $1
-         AND transaction_date >= DATE_TRUNC('month', CURRENT_DATE)::date
+         AND currency_code = (SELECT currency_code FROM users WHERE id = $1)
+         AND transaction_date >= COALESCE($2::date, DATE_TRUNC('month', CURRENT_DATE)::date)
          AND transaction_date <
-             (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month')::date`,
-      [req.user.id]
+             (COALESCE($2::date, DATE_TRUNC('month', CURRENT_DATE)::date) + INTERVAL '1 month')::date`,
+      [req.user.id, month]
     )
 
     const income = Number(result.rows[0].income)
@@ -98,7 +107,7 @@ router.post('/', async (req, res) => {
       paymentMethod,
       note,
       transactionDate,
-    } = req.body
+    } = req.body || {}
 
     if (!['income', 'expense'].includes(type)) {
       return res.status(400).json({
@@ -108,13 +117,13 @@ router.post('/', async (req, res) => {
 
     const numericAmount = Number(amount)
 
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    if (!validMoney(amount)) {
       return res.status(400).json({
         message: 'Amount must be greater than 0',
       })
     }
 
-    if (!category?.trim()) {
+    if (!validCategory(category)) {
       return res.status(400).json({
         message: 'Category is required',
       })
@@ -122,11 +131,16 @@ router.post('/', async (req, res) => {
 
     if (
       transactionDate &&
-      !/^\d{4}-\d{2}-\d{2}$/.test(transactionDate)
+      !validDate(transactionDate)
     ) {
       return res.status(400).json({
         message: 'Transaction date must use YYYY-MM-DD format',
       })
+    }
+
+    if ([['Merchant', merchant, 150], ['Payment method', paymentMethod, 50], ['Notes', note, 5000]]
+      .some(([label, value, max]) => value != null && (typeof value !== 'string' || value.length > max))) {
+      return res.status(400).json({ message: 'Merchant, payment method, or note is invalid or too long' })
     }
 
     const result = await pool.query(
@@ -138,16 +152,19 @@ router.post('/', async (req, res) => {
          merchant,
          payment_method,
          note,
-         transaction_date
+         transaction_date,
+         currency_code
        )
        VALUES (
          $1, $2, $3, $4, $5, $6, $7,
-         COALESCE($8::date, CURRENT_DATE)
+         COALESCE($8::date, CURRENT_DATE),
+         (SELECT currency_code FROM users WHERE id=$1)
        )
        RETURNING
          id,
          type,
          amount,
+         currency_code,
          category,
          merchant,
          payment_method,
@@ -201,7 +218,7 @@ router.put('/:id', async (req, res) => {
       paymentMethod,
       note,
       transactionDate,
-    } = req.body
+    } = req.body || {}
 
     if (!['income', 'expense'].includes(type)) {
       return res.status(400).json({
@@ -211,13 +228,13 @@ router.put('/:id', async (req, res) => {
 
     const numericAmount = Number(amount)
 
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    if (!validMoney(amount)) {
       return res.status(400).json({
         message: 'Amount must be greater than 0',
       })
     }
 
-    if (!category?.trim()) {
+    if (!validCategory(category)) {
       return res.status(400).json({
         message: 'Category is required',
       })
@@ -225,11 +242,16 @@ router.put('/:id', async (req, res) => {
 
     if (
       !transactionDate ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(transactionDate)
+      !validDate(transactionDate)
     ) {
       return res.status(400).json({
         message: 'Transaction date must use YYYY-MM-DD format',
       })
+    }
+
+    if ([['Merchant', merchant, 150], ['Payment method', paymentMethod, 50], ['Notes', note, 5000]]
+      .some(([label, value, max]) => value != null && (typeof value !== 'string' || value.length > max))) {
+      return res.status(400).json({ message: 'Merchant, payment method, or note is invalid or too long' })
     }
 
     const result = await pool.query(
@@ -248,6 +270,7 @@ router.put('/:id', async (req, res) => {
          id,
          type,
          amount,
+         currency_code,
          category,
          merchant,
          payment_method,
