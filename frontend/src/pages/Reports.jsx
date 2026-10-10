@@ -36,7 +36,7 @@ export default function Reports() {
   }),[transactions,year,currency])
   const max=Math.max(1,...yearly.flatMap(m=>[m.income,m.expenses]))
   return <div className="app"><aside className="sidebar"><div><div className="logo"><span className="logoMark">B</span>BudgetNest</div><nav>
-    <button className="navItem" onClick={()=>navigate('/')}>▦ Dashboard</button><button className="navItem" onClick={()=>navigate('/transactions')}>↕ Transactions</button><button className="navItem" onClick={()=>navigate('/budgets')}>◎ Budgets</button><button className="navItem active">◔ Reports</button><button className="navItem" onClick={()=>navigate('/settings')}>⚙ Settings</button>
+    <button className="navItem" onClick={()=>navigate('/')}>▦ Dashboard</button><button className="navItem" onClick={()=>navigate('/transactions')}>↕ Transactions</button><button className="navItem" onClick={()=>navigate('/budgets')}>◎ Budgets</button><button className="navItem" onClick={()=>navigate('/goals')}>☆ Goals</button><button className="navItem active">◔ Reports</button><button className="navItem" onClick={()=>navigate('/settings')}>⚙ Settings</button>
   </nav></div></aside><main className="main"><header className="topbar"><div><p className="eyebrow">REAL DATA ANALYTICS</p><h1>Reports</h1><p className="muted">Financial overview for {currency}; historical amounts are never converted.</p></div></header>
   {error && <p role="alert" className="auth-error">{error}</p>}
   <section className="filterGrid" aria-label="Reporting period">

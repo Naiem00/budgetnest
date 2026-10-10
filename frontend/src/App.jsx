@@ -8,6 +8,7 @@ import {
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Budgets from './pages/Budgets'
+import Goals from './pages/Goals'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
@@ -58,6 +59,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
 
         <Route
           path="/reports"

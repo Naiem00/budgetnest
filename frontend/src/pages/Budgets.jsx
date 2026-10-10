@@ -208,6 +208,7 @@ function Budgets() {
               ◎ Budgets
             </button>
 
+            <button className="navItem" onClick={() => navigate('/goals')}>☆ Goals</button>
             <button
               className="navItem"
               onClick={() => navigate('/reports')}

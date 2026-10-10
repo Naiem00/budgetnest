@@ -855,3 +855,22 @@ h2 span {
   .filterGrid {grid-template-columns:repeat(2,minmax(0,1fr));}
 }
 @media (max-width:400px) {.filterGrid{grid-template-columns:1fr;}}
+
+
+/* BudgetNest v2 - Savings Goals */
+.goalsEditor { margin: 20px 0; }
+.goalForm { display: grid;grid-template-columns: repeat(3,minmax(0,1fr));gap:14px;margin-top:18px; }
+.goalForm label,.goalActions label { display:grid;gap:7px;color:#344054;font-size:13px;font-weight:600; }
+.goalForm input,.goalActions input { width:100%;box-sizing:border-box;padding:11px 12px;min-width:0;border:1px solid #d0d5dd;border-radius:10px;background:white;color:#111827;font:inherit; }
+.goalFormActions { grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap; }
+.goalGrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:18px;}
+.goalCard {display:flex;flex-direction:column;gap:16px;min-width:0;}
+.goalCard h2 {overflow-wrap:anywhere;}
+.goalAmounts {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.goalAmounts div {min-width:0;display:grid;gap:5px;}
+.goalAmounts span {color:#6b7280;font-size:13px;}
+.goalAmounts strong {overflow-wrap:anywhere;font-size:19px;}
+.goalActions {display:grid;gap:9px;}
+.goalButtonRow {display:flex;flex-wrap:wrap;gap:9px;}
+.goalButtonRow button:disabled,.goalFormActions button:disabled {opacity:.6;cursor:not-allowed;}
+@media (max-width:800px) {.goalGrid {grid-template-columns:1fr;}.goalForm {grid-template-columns:1fr;}}

@@ -5,6 +5,7 @@ import { checkDatabaseConnection } from './config/database.js'
 import authRoutes from './routes/auth.js'
 import transactionsRoutes from './routes/transactions.js'
 import budgetsRoutes from './routes/budgets.js'
+import goalsRoutes from './routes/goals.js'
 import {requireAuth} from './middleware/auth.js'
 
 const app = express()
@@ -50,6 +51,7 @@ app.get('/api/health/db', requireAuth, async (req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/transactions', transactionsRoutes)
 app.use('/api/budgets', budgetsRoutes)
+app.use('/api/goals', goalsRoutes)
 
 app.use((err,req,res,next) => {
   if (err?.message === 'Origin not allowed') return res.status(403).json({ message:'Origin not allowed' })
