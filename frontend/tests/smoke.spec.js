@@ -65,7 +65,7 @@ test('authenticated mobile navigation exposes all finance pages', async ({ page 
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) })
   })
   await page.goto('/')
-  for (const name of ['Dashboard','Transactions','Budgets','Goals','Reports','Settings']) {
+  for (const name of ['Dashboard','Transactions','Budgets','Goals','Recurring','Reports','Settings']) {
     await expect(page.getByRole('navigation').getByRole('button', { name: new RegExp(name) })).toBeVisible()
   }
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
@@ -100,4 +100,24 @@ test('savings goals page shows recorded goal with its original currency', async 
   await expect(page.getByRole('heading', { name: 'Savings Goals' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Emergency Fund' })).toBeVisible()
   await expect(page.getByRole('progressbar', { name: 'Emergency Fund progress' })).toHaveAttribute('aria-valuenow', '25')
+})
+
+
+test('recurring route requires login', async ({page}) => {
+  await page.goto('/recurring')
+  await expect(page).toHaveURL(/\/login$/)
+})
+
+test('recurring page displays manual confirmation before posting', async ({page}) => {
+  await page.addInitScript(()=>localStorage.setItem('budgetnest_token','test-only-mock-jwt'))
+  await page.route('**/api/auth/me',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({user:{id:1,name:'Test',email:'test@example.invalid',country_code:'JP',currency_code:'JPY'}})}))
+  await page.route('**/api/recurring?**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({templates:[{
+    id:5,title:'Monthly Rent',type:'expense',amount:50000,currencyCode:'JPY',category:'Housing',
+    dayOfMonth:1,startMonth:'2020-01',active:true,posted:false,merchant:'',paymentMethod:'',note:'',
+  }]})}))
+  await page.goto('/recurring')
+  await expect(page.getByRole('heading',{name:'Recurring Transactions'})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Monthly Rent'})).toBeVisible()
+  await expect(page.getByRole('button',{name:'Review & Record'})).toBeVisible()
+  await expect(page.getByText('never posted automatically')).toBeVisible()
 })

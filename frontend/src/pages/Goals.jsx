@@ -91,6 +91,7 @@ export default function Goals() {
         <button className="navItem" onClick={() => navigate('/transactions')}>↕ Transactions</button>
         <button className="navItem" onClick={() => navigate('/budgets')}>◎ Budgets</button>
         <button className="navItem active" aria-current="page">☆ Goals</button>
+        <button className="navItem" onClick={() => navigate('/recurring')}>↻ Recurring</button>
         <button className="navItem" onClick={() => navigate('/reports')}>◔ Reports</button>
         <button className="navItem" onClick={() => navigate('/settings')}>⚙ Settings</button>
       </nav></div>

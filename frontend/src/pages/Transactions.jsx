@@ -246,6 +246,7 @@ function Transactions() {
 
             <button className="navItem" onClick={() => navigate('/budgets')}>◎ Budgets</button>
             <button className="navItem" onClick={() => navigate('/goals')}>☆ Goals</button>
+            <button className="navItem" onClick={() => navigate('/recurring')}>↻ Recurring</button>
             <button className="navItem" onClick={() => navigate('/reports')}>◔ Reports</button>
             <button className="navItem" onClick={() => navigate('/settings')}>⚙ Settings</button>
           </nav>

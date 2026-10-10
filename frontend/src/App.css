@@ -874,3 +874,18 @@ h2 span {
 .goalButtonRow {display:flex;flex-wrap:wrap;gap:9px;}
 .goalButtonRow button:disabled,.goalFormActions button:disabled {opacity:.6;cursor:not-allowed;}
 @media (max-width:800px) {.goalGrid {grid-template-columns:1fr;}.goalForm {grid-template-columns:1fr;}}
+
+/* BudgetNest v2 Sprint 2 - Recurring Transactions */
+.recurringEditor {margin:20px 0;}
+.recurringForm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-top:18px;}
+.recurringForm label,.recurringMonth label{display:grid;gap:7px;font-size:13px;font-weight:600;color:#344054;min-width:0;}
+.recurringForm input,.recurringForm select,.recurringForm textarea,.recurringMonth input{width:100%;min-width:0;box-sizing:border-box;border:1px solid #d0d5dd;background:white;color:#111827;border-radius:9px;padding:11px;font:inherit;}
+.recurringWide{grid-column:1/-1;}
+.recurringActions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.recurringMonth{margin:20px 0;}.recurringMonth label{max-width:240px;}
+.recurringGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;}
+.recurringCard{display:flex;flex-direction:column;gap:13px;min-width:0;}
+.recurringCard h2{overflow-wrap:anywhere;}.recurringCard strong{overflow-wrap:anywhere;}
+.recurringStatus{font-weight:650;margin:0;color:#40536b;}
+.recurringCard button:disabled,.recurringForm button:disabled{opacity:.6;cursor:not-allowed;}
+@media(max-width:800px){.recurringForm,.recurringGrid{grid-template-columns:1fr;}}

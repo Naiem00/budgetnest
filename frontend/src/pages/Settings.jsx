@@ -40,7 +40,8 @@ export default function Settings() {
         <button className="navItem" onClick={()=>navigate('/')}>▦ Dashboard</button>
         <button className="navItem" onClick={()=>navigate('/transactions')}>↕ Transactions</button>
         <button className="navItem" onClick={()=>navigate('/budgets')}>◎ Budgets</button>
-        <button className="navItem" onClick={()=>navigate('/goals')}>☆ Goals</button><button className="navItem" onClick={()=>navigate('/reports')}>◔ Reports</button>
+        <button className="navItem" onClick={()=>navigate('/goals')}>☆ Goals</button>
+            <button className="navItem" onClick={() => navigate('/recurring')}>↻ Recurring</button><button className="navItem" onClick={()=>navigate('/reports')}>◔ Reports</button>
         <button className="navItem active">⚙ Settings</button>
       </nav></div></aside>
     <main className="main"><header className="topbar"><div><p className="eyebrow">ACCOUNT</p><h1>Settings</h1><p className="muted">Manage your profile and secure your account.</p></div></header>
